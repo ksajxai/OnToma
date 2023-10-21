@@ -121,11 +121,12 @@ class EFOHandler:
                     )
             # Extracting synonyms:
             for synonym in term.synonyms:
-                if synonym.description and synonym.scope == "EXACT":
+                if synonym.description and synonym.scope in ["EXACT", "RELATED"]:
                     synonyms_dataset.append(
                         [
                             synonym.description.lower(),
                             normalised_term_id,
+                            synonym.scope
                         ]
                     )
 
@@ -141,7 +142,7 @@ class EFOHandler:
             ),
         )
         self.synonyms = pd.DataFrame(
-            synonyms_dataset, columns=("normalised_synonym", "normalised_id")
+            synonyms_dataset, columns=("normalised_synonym", "normalised_id", "synonym_scope")
         )
 
         # Looping through all datasets and save cache:

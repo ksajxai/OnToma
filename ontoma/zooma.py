@@ -24,13 +24,15 @@ class ZoomaClient:
         self.base = zooma_base.rstrip('/')
         self.session = requests.Session()
 
-    def search(self, query_string):
+    def search(self, query_string, confidence=None):
         """Query ZOOMA and return all high confidence mappings."""
+        if not confidence:
+            confidence = {'HIGH'}
         payload = {
             'ontologies': '[EFO]',
         }
         url = f'{self.base}/services/annotate?propertyValue={query_string}'
         for zooma_result in requests.get(url, data=payload).json():
-            if zooma_result['confidence'] == 'HIGH':
+            if zooma_result['confidence'] in confidence:
                 for semantic_tag in zooma_result['semanticTags']:
                     yield semantic_tag

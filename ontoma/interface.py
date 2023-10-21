@@ -130,7 +130,8 @@ class OnToma:
         """Find EFO terms which have the query as an exact synonym."""
         return self.filter_identifiers_by_efo_current(
             self.efo_synonyms[
-                self.efo_synonyms.normalised_synonym == normalised_string
+                (self.efo_synonyms.normalised_synonym == normalised_string)
+                & (self.efo_synonyms.synonym_scope == 'EXACT')
             ].normalised_id
         )
 
@@ -145,15 +146,24 @@ class OnToma:
     def step08_zooma_high_confidence(self, normalised_string):
         zooma_mappings = {
             ontology.normalise_ontology_identifier(mapping)
-            for mapping in self._zooma.search(normalised_string)
+            for mapping in self._zooma.search(normalised_string, confidence={'HIGH'})
         }
         return self.filter_identifiers_by_efo_current(zooma_mappings)
 
     def step09_owl_related_synonym(self, normalised_string):
-        raise NotImplementedError
+        return self.filter_identifiers_by_efo_current(
+            self.efo_synonyms[
+                (self.efo_synonyms.normalised_synonym == normalised_string)
+                & (self.efo_synonyms.synonym_scope == 'RELATED')
+                ].normalised_id
+        )
 
     def step10_zooma_any(self, normalised_string):
-        raise NotImplementedError
+        zooma_mappings = {
+            ontology.normalise_ontology_identifier(mapping)
+            for mapping in self._zooma.search(normalised_string, confidence={'GOOD', 'MEDIUM', 'LOW'})
+        }
+        return self.filter_identifiers_by_efo_current(zooma_mappings)
 
     def find_term(
         self,
@@ -181,7 +191,7 @@ class OnToma:
         7. Mapping from the manual string-to-ontology database.
         8. High confidence mapping from ZOOMA with default parameters.
 
-        The following functionality is planned, but not yet implemented. — If the query is a string, and additionally
+        If the query is a string, and additionally
         the `suggest` flag is specified, additional steps are attempted:
         9. Inexact synonyms (hasRelatedSynonym) from the OWL file.
         10. Any confidence mapping from ZOOMA with default parameters.
